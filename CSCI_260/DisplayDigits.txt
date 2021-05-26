@@ -1,0 +1,308 @@
+#Assignment: Project 2        
+#Name: Lakshmi Palchuri
+
+.data
+a: .word 0			#starting number
+b: .word 99			#ending number
+
+.text 
+main:
+#_________________________ Get a and b into Registers __________________________
+
+# Get and load a and b into registers $t0 and $t1 respectively
+
+lw $t0, a			#$t0 <- a	
+lw $t1, b			#$t1 <- b	
+
+#__________________________ Validate a and b Parameters _________________________
+
+# Must check that 0 ≤ a ≤ b ≤ 99 if not then program exits and has an empty 
+#display. The inequality is broken into 5 separate inequalities: 
+#a < 0, a > 99, b < 0, b < a, b > 99. If any of these are true the program exits.
+
+li $t8, 0			#$t8 <- 0
+li $t9, 99			#$t9 <- 99
+
+# if(a < 0 or a > 99) -> exit    		
+blt $t0, $t8, exit  		#if a < 0 -> exit
+bgt $t0, $t9, exit		#if a > 99 -> exit
+
+# if(b < 0 or b < a or b > 99) -> exit    
+blt $t1, $s0, exit		#if b < a -> exit
+blt $t1, $t8, exit  		#if b < 0 -> exit
+bgt $t1, $t9, exit		#if b > 99 -> exit
+
+#___________________________ Looping through numbers a-> b _____________________
+
+#This part loops through the numbers from a to b. First div is used to get the 10s digit 
+#and 1s digit of a, the lower 32 bits are the quotient (mflo) and the higher 32 bits 
+#are the remainder (mfhi). 
+
+addi $t4, $zero, 10		#$t4 <- 10 (to be used to extract digits of a)
+div $t0, $t4			#a/10 = mflo R mfhi
+mflo $t5			#$t5 gets 10s digit of a 	(Left Digit)
+mfhi $t6			#$t6 gets units/1s digit of a	(Right Digit)
+
+#Now a for loop is set up for(i = a; i <= b; i++) so each number in the range a to b can 
+#be iterated over and so the display can be applied to each number in the range.
+
+add $t2, $zero, $t0		#i <- a
+loop: sle $t3, $t2, $t1		#$t3 <- 1 if i <= b else $t3 <- 0
+beq $t3, $zero, exit		#exit loop if $t3 <- 0 since i > b  
+
+#_______________________________ Delay Loop __________________________________
+#This is a loop meant to delay displaying by 1-2seconds. Here we decreasing a large
+#number by 1 each iteration till becomes 0. If it reaches 0 we can move on to next code. 
+#This loop gives a lag so we can see the numbers increase from a - b on the LEDs
+
+delayLoop: 
+li $t9, 500000			#$t9 <- 400,000
+innerLoop:			
+addi $t9, $t9, -1		#$t9 <- $t9 - 1
+bne $t9, $zero, innerLoop	#if $t9 != 0 go to innerLoopLeft else continue 
+
+#______________ Save Registers Call Display and Restore Registers ________________
+
+#Now since we are calling a function we must push/save needed registers with 
+#the stack pointer to preserve their values. 
+
+addi $sp, $sp, -40		#Push stack by 40
+sw $t0, 36($sp)			#store and save $t0
+sw $t1, 32($sp)			#store and save $t1
+sw $t2, 28($sp)			#store and save $t2
+sw $t3, 24($sp)			#store and save $t3
+sw $t5, 20($sp)			#store and save $t5
+sw $t6, 16($sp)			#store and save $t6
+sw $t7, 12($sp)			#store and save $t7
+sw $t9, 8($sp)			#store and save $t9 
+sw $a0, 4($sp)			#Push $a0 onto stack
+sw $a1, 0($sp)			#Push $a1 onto stack 
+
+#__________________ Setting up arguements for Left LED Display_____________________ 
+
+#Then we now set a0 which is an arguement register which stores which led we are 
+#displaying a number in. First we display the Left LED so we put 0 in a0 to indicate
+#the number we are sending is meant to be displayed in the left LED. 
+#The next arguement we pass to the display function is the actual number that is meant
+#to be displayed. This is done by placing $t5 into $a1. $t5 (as initially indicated 
+#above) stores the 10s digit of a(or i as we traverse). 
+
+li $a0, 0			#send to left led
+add $a1, $t5, $zero		#send new 10s digit to display
+#___________________________________________________________________________________
+
+#Call Display and display a digit on Left LED now that we have arguements 
+#set up and needed registers saved
+
+jal display			#Call Display Function
+
+#___________________________________________________________________________________
+#Now we are finsihed displaying a digit on the Left LED we must restore the saved 
+#registers using the stack pointer and pop them off the stack so they can be used later
+
+lw $a1, 0($sp)			#load $a1's stored value into iteself 
+lw $a0, 4($sp)			#load $a0's stored value into iteself 
+lw $t9, 8($sp)			#load $t9's stored value into iteself 
+lw $t7, 12($sp)			#load $t7's stored value into iteself 
+lw $t6, 16($sp)			#load $t6's stored value into iteself 
+lw $t5, 20($sp)			#load $t5's stored value into iteself 
+lw $t3, 24($sp)			#load $t3's stored value into iteself 
+lw $t2, 28($sp)			#load $t2's stored value into iteself 
+lw $t1, 32($sp)			#load $t1's stored value into iteself 
+lw $t0, 36($sp)			#load $t0's stored value into iteself 
+addi $sp, $sp, 40		#Pop stack by 40
+
+#__________________________________________________________________________________
+
+#_______________ Save Registers Call Display and Restore Registers __________________
+
+#Now since we are calling a function we must push/save needed registers with 
+#the stack pointer to preserve their values. 
+
+addi $sp, $sp, -40		#Push stack by 40
+sw $t0, 36($sp)			#store and save $t0
+sw $t1, 32($sp)			#store and save $t1
+sw $t2, 28($sp)			#store and save $t2
+sw $t3, 24($sp)			#store and save $t3
+sw $t5, 20($sp)			#store and save $t5
+sw $t6, 16($sp)			#store and save $t6
+sw $t7, 12($sp)			#store and save $t7
+sw $t9, 8($sp)			#store and save $t9 
+sw $a0, 4($sp)			#Push $a0 onto stack
+sw $a1, 0($sp)			#Push $a1 onto stack 
+
+#__________________ Setting up arguements for Right LED Display ___________________
+
+#Then we now set a0 which is an arguement register which stores which led we are 
+#displaying a number in. Now we display the Right LED so we put 1 in a0 to indicate
+#the number(0-9) we are sending is meant to be displayed in the right LED. 
+#The next arguement we pass to the display function is the actual number (0-9) that is 
+#displayed. This is done by placing $t6 into $a1. $t5 (as initially indicated 
+#above) stores the 1s digit of a(or i as we traverse). 
+
+li $a0, 1			#send to right led
+add $a1, $t6, $zero		#send new units digit to display
+#____________________________________________________________________________________
+#Call Display and display a digit on right LED now that we have arguements 
+#set up and needed registers saved
+
+jal display 			# Call Display Function
+#____________________________________________________________________________________
+#Now we are finsihed displaying a digit on the right LED we must restore the saved 
+#registers using the stack pointer and pop them off the stack so they can be used later
+
+lw $a1, 0($sp)			#load $a1's stored value into iteself 
+lw $a0, 4($sp)			#load $a0's stored value into iteself 
+lw $t9, 8($sp)			#load $t9's stored value into iteself 
+lw $t7, 12($sp)			#load $t7's stored value into iteself 
+lw $t6, 16($sp)			#load $t6's stored value into iteself 
+lw $t5, 20($sp)			#load $t5's stored value into iteself 
+lw $t3, 24($sp)			#load $t3's stored value into iteself 
+lw $t2, 28($sp)			#load $t2's stored value into iteself 
+lw $t1, 32($sp)			#load $t1's stored value into iteself 
+lw $t0, 36($sp)			#load $t0's stored value into iteself 
+addi $sp, $sp, 40		#Pop stack by 40
+
+#_______________________ Setting up the Next Digit (L/R) ______________________________
+
+#Now that we have displayed the left and right digit we need to set up the next digits
+#to be printed in the next iteration. 
+
+#If the current right digit is 9 it means the left digit need to be incremented 
+#(ex. current digit = 19 -> next digit = 20) so if 9 is the current digit we 
+#increment the 10s digit (in $t5) and set the 1s digit to be 0. Since we already 
+#already set the units digit to 0 we do not need to increment so we go to the 
+#dont increment section
+
+li $t7, 9			#$t7 <- 9
+bne $t6, $t7, skipOver		#if 1s dig != 9 go to skipover
+addi $t5, $t5, 1		#$t5 <- $t5 + 1 (increment 10s digit)
+add $t6, $zero, $zero		#$t6 <- 0 (reset units digit)
+j dontIncrement			#go to dontIncrement section
+
+#If the 1s digit is not 9 then come here and increment the units digit by 1
+
+skipOver:
+addi $t6, $t6, 1		#$t6 <- $t6 + 1 (increment 1s digit)
+
+#Here is the rest of the for loop so we can keep track and make sure we are with in 
+#the a to b range. We increment t2 or i every iteration and send back to top of  
+#the loop to continue to process each digit. 
+
+dontIncrement:
+addi $t2, $t2, 1		# i <- i + 1 (i++)
+j loop				#iterate
+
+#To exit program, we are here if any of the preconditions are not met by the a and b 
+#passed in. So if 0 ≤ a ≤ b ≤ 99 is not met or if in the for loop i > b then we end the
+#program with these instructions.
+
+exit:				
+li $v0, 10			#these two statements allow to 
+syscall				#properly end a MIPS program
+
+#___________________________ Display Digits Function  ______________________________
+
+display:			# display takes two arguements (led,digit)
+
+#________________________________ Right or Left LED ________________________________
+
+#One of the arguments sent in is which LED to display on and it is indicated by 
+#passing in 0 for the left LED, 1 for the right LED and depending on which number 
+#is passed we make the address match accordingly. If 0 is passed we put 0xFFFF0010
+#into s0 and if 1 is passed we put 0xFFFF0011. Also checks if a1 = 0 when a0 = 0
+#since this means i < 10 so left digit is 0 and does not need to be printed.
+
+bne $a0, 0, rightLED		#If $a0 != 0 go to rightLED section
+li $s0, 0xFFFF0011		#$a0 = 0 so 0xFFFF0010 is stored in s0 (LEFT)
+
+beq $a1, 0, endOfDisplay	#If $a1 = 0 go to endOfDisplay (since i < 10)
+		
+rightLED:	
+bne $a0, 1, afterLEDCheck	#If $a0 != 1 its 0 so go to displying part 
+li $s0, 0xFFFF0010		#$a0 = 1 so 0xFFFF0011 is stored in s0 (LEFT)
+
+#________________________________ Display the Digit __________________________________
+
+afterLEDCheck:			
+#SAVE REG S4
+
+#Here we check compare the number passed in through arguement a1 with numbers 0-9 and
+#if a1 equals a number this is what we display on the LED.
+
+li $s4, 0			#$s4 <- 0 (This reg will be compared each time)
+ 		
+#LED Digits in number(hex, decimal) 
+#0(0x3f or 63) 1(0x6, 6), 2(0x5B, 91), 3(0x4f, 79), 4(0x66, 102)
+#5(0x6d, 109), 6(0x7d, 125), 7(0x7, 7, 8(0x7F, 127), 9(0x67, 103)
+
+bne $a1, $s4, checkOne		#if $a1 != 0 go to checkOne
+li $s1, 63			#$s1 <- 63 (Led representation of 0) $a1 is 0
+sb $s1, 0($s0)			#Save 0s LED representation in L($s0 = 0) or R ($s0 = 1) LED
+j endOfDisplay			#Now that digit has been displayed jump to end and exit 
+
+checkOne:
+addi $s4, $s4,1			#$s4 <- s4 + 1 (so $s4 <- 1)
+bne $a1, $s4, checkTwo		#if $a1 != 1 go to checkTwo
+li $s1, 6			#$s1 <- 6 (Led representation of 1) $a1 is 1
+sb $s1, 0($s0)			#Save 1s LED representation in L($s0 = 0) or R ($s0 = 1) LED
+j endOfDisplay			#Now that digit has been displayed jump to end and exit 
+
+checkTwo:
+addi $s4, $s4,1			#$s4 <- $s4 + 1 (so $s4 <- 2)
+bne $a1, $s4, checkThree	#if $a1 != 2 go to checkThree
+li $s1, 91			#$s1 <- 91 (Led representation of 2) $a1 is 2
+sb $s1, 0($s0)			#Save 2s LED representation in L($s0 = 0) or R ($s0 = 1) LED
+j endOfDisplay			#Now that digit has been displayed jump to end and exit 
+
+checkThree:
+addi $s4, $s4,1			#$s4 <- $s4 + 1 (so $s4 <- 3)
+bne $a1, $s4, checkFour		#if $a1 != 3 go to checkFour
+li $s1, 79			#$s1 <- 79 (Led representation of 3) $a1 is 3
+sb $s1, 0($s0)			#Save 3s LED representation in L($s0 = 0) or R ($s0 = 1) LED
+j endOfDisplay			#Now that digit has been displayed jump to end and exit 
+
+checkFour:
+addi $s4, $s4,1			#$s4 <- $s4 + 1 (so $s4 <- 4)
+bne $a1, $s4, checkFive		#if $a1 != 4 go to checkFive
+li $s1, 102			#$s1 <- 102 (Led representation of 4) $a1 is 4
+sb $s1, 0($s0)			#Save 4s LED representation in L($s0 = 0) or R ($s0 = 1) LED
+j endOfDisplay			#Now that digit has been displayed jump to end and exit 
+
+checkFive:
+addi $s4, $s4,1			#$s4 <- $s4 + 1 (so $s4 <- 5)
+bne $a1, $s4, checkSix		#if $a1 != 5 go to checkSix
+li $s1, 109			#$s1 <- 109 (Led representation of 5) $a1 is 5
+sb $s1, 0($s0)			#Save 5s LED representation in L($s0 = 0) or R ($s0 = 1) LED
+j endOfDisplay			#Now that digit has been displayed jump to end and exit 
+
+checkSix:
+addi $s4, $s4,1			#$s4 <- $s4 + 1 (so $s4 <- 6)
+bne $a1, $s4, checkSeven	#if $a1 != 6 go to checkSeven
+li $s1, 125			#$s1 <- 125 (Led representation of 6) $a1 is 6
+sb $s1, 0($s0)			#Save 6s LED representation in L($s0 = 0) or R ($s0 = 1) LED
+j endOfDisplay			#Now that digit has been displayed jump to end and exit 
+
+checkSeven:
+addi $s4, $s4,1			#$s4 <- $s4 + 1 (so $s4 <- 7)
+bne $a1, $s4, checkEight	#if $a1 != 7 go to checkEight
+li $s1, 7			#$s1 <- 7 (Led representation of 7) $a1 is 7
+sb $s1, 0($s0)			#Save 7s LED representation in L($s0 = 0) or R ($s0 = 1) LED
+j endOfDisplay			#Now that digit has been displayed jump to end and exit 
+
+checkEight:
+addi $s4, $s4,1			#$s4 <- $s4 + 1 (so $s4 <- 8)
+bne $a1, $s4, checkNine		#if a1 != 8 go to checkNine
+li $s1, 127			#$s1 <- 127 (Led representation of 8) $a1 is 8
+sb $s1, 0($s0)			#Save 8s LED representation in L($s0 = 0) or R ($s0 = 1) LED
+j endOfDisplay			#Now that digit has been displayed jump to end and exit 
+
+checkNine:			
+addi $s4, $s4,1			#$s4 <- $s4 + 1 (so s4 <- 9)
+bne $a1, $s4, endOfDisplay	#if $a1 != 9 go to endOfDisplay
+li $s1, 103			#$s1 <- 103 (Led representation of 9) $a1 is 9
+sb $s1, 0($s0)			#Save 9s LED representation in L(s0 = 0) or R ($s0 = 1) LED
+
+endOfDisplay:			
+jr $ra				#Go to main 
+
