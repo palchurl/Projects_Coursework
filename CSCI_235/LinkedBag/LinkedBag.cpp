@@ -101,7 +101,7 @@ int LinkedBag<ItemType>::getCurrentSize() const
 	return itemCount;
 }  // end getCurrentSize
 
-/**************************************************************************************/
+/************************************************************************************* STARTS HERE */
 
 /** Adds a new node to the end of a linked list (Mutator)
 @return true(1) if a node has been added and false(0) 
@@ -284,7 +284,7 @@ ItemType LinkedBag<ItemType>::removeRandom()
    //
 }
  
-/*************************************************************************************/
+/************************************************************************************  STOPS HERE*/
 
 /** Makes list a vector (Accessor)
 @return a string with list values */
