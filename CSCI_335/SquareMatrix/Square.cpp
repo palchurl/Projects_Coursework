@@ -389,19 +389,3 @@ TO COMPILE:
 g++ -std=c++11 SquareMatrix.cpp -o pi
 ./pi
 
-
-LINKS--------------------------------------------------------------
-https://www.youtube.com/watch?v=xLC29eXuVPI
-https://www.youtube.com/watch?v=GmRztE56gpE 
-https://github.com/akalicki/matrix/blob/master/dist/matrix.cpp        //operator=
-https://github.com/OmarAflak/Matrix/blob/master/matrix.h
-https://stackoverflow.com/questions/24540329/operator-overloading-with-dynamic-allocated-matrix //operator + , =
-https://github.com/c650/matrix/blob/master/matrix.hpp
-*/
-
-/*
-MyClass t1, t2; 
-MyClass t3 = t1;  //copy const
-t2 = t1;          // copy assignment*/
-
-
